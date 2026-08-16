@@ -105,9 +105,9 @@ To run Nexora AI locally, you need to provide your own API keys.
 
 ## 👨‍💻 Developer
 
-**Akash Ray**
+**Akash Yadav**
 *   Passionate Android Developer focused on Premium UI & AI Integration.
-*   GitHub: [@akash-ray](https://github.com/YOUR_GITHUB_HANDLE)
+*   GitHub: [@akashray398](https://github.com/akashray398)
 
 ---
 *Note: This project was built to demonstrate advanced Jetpack Compose interactions, Clean Architecture, and seamless multi-provider AI integration.*
