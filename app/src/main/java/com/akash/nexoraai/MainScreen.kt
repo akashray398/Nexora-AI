@@ -605,6 +605,26 @@ fun DashboardScreen(
                 navController.navigate("topic_explorer/SQL")
             }
         }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            TopicItem("Kotlin", Icons.Default.Code) {
+                navController.navigate("topic_explorer/Kotlin")
+            }
+            TopicItem("Java", Icons.Default.Coffee) {
+                navController.navigate("topic_explorer/Java")
+            }
+            TopicItem("Cloud", Icons.Default.Cloud) {
+                navController.navigate("topic_explorer/Cloud")
+            }
+            TopicItem("Security", Icons.Default.Security) {
+                navController.navigate("topic_explorer/Security")
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -1115,6 +1135,7 @@ fun VoiceInteractionScreen(viewModel: ChatViewModel, onBack: () -> Unit) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
+            tts?.stop() // Stop AI if speaking when user wants to speak
             voiceManager.startListening()
             appVoiceState = VoiceState.LISTENING
         }
@@ -1123,27 +1144,43 @@ fun VoiceInteractionScreen(viewModel: ChatViewModel, onBack: () -> Unit) {
     // Handle user voice input
     LaunchedEffect(voiceState.spokenText) {
         if (voiceState.spokenText.isNotBlank()) {
+            val textToProcess = voiceState.spokenText
+            voiceManager.resetSpokenText() 
             appVoiceState = VoiceState.THINKING
-            viewModel.sendMessage(voiceState.spokenText)
+            viewModel.sendMessage(textToProcess)
+        }
+    }
+
+    // Synchronize appVoiceState with ViewModel's loading state
+    LaunchedEffect(isLoading) {
+        if (isLoading) {
+            appVoiceState = VoiceState.THINKING
         }
     }
 
     // Handle AI response and speak it
     LaunchedEffect(chatMessages.size) {
         val lastMessage = chatMessages.lastOrNull()
-        if (lastMessage != null && !lastMessage.isUser && appVoiceState == VoiceState.THINKING) {
-            appVoiceState = VoiceState.SPEAKING
-            
-            // Clean text for voice: Remove Markdown and limit length
-            val cleanSpeechText = lastMessage.text
-                .replace(Regex("[#*`_~]"), "")
-                .replace(Regex("\\s+"), " ")
-                .trim()
-                .take(300) 
-            
-            tts?.speak(cleanSpeechText, TextToSpeech.QUEUE_FLUSH, null, null)
-            delay(cleanSpeechText.length * 60L)
-            appVoiceState = VoiceState.IDLE
+        if (lastMessage != null && !lastMessage.isUser && (appVoiceState == VoiceState.THINKING || appVoiceState == VoiceState.IDLE)) {
+            if (System.currentTimeMillis() - lastMessage.timestamp < 5000) {
+                appVoiceState = VoiceState.SPEAKING
+                
+                val cleanSpeechText = lastMessage.text
+                    .replace(Regex("[#*`_~]"), "")
+                    .replace(Regex("\\(.*?\\)"), "")
+                    .replace(Regex("\\[.*?\\]"), "")
+                    .replace(Regex("\\s+"), " ")
+                    .trim()
+                    .take(400) 
+                
+                tts?.speak(cleanSpeechText, TextToSpeech.QUEUE_FLUSH, null, null)
+                
+                val wordCount = cleanSpeechText.split(" ").size
+                val estimatedSpeechMillis = (wordCount * 500L).coerceIn(2000L, 10000L)
+                delay(estimatedSpeechMillis)
+                
+                appVoiceState = VoiceState.IDLE
+            }
         }
     }
 
@@ -1169,6 +1206,13 @@ fun VoiceInteractionScreen(viewModel: ChatViewModel, onBack: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
+                // New Close/Cancel Button
+                IconButton(onClick = {
+                    tts?.stop()
+                    onBack()
+                }, modifier = Modifier.background(GlassWhite, CircleShape)) {
+                    Icon(Icons.Default.Close, contentDescription = "Cancel", tint = Color.White)
+                }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -1219,6 +1263,7 @@ fun VoiceInteractionScreen(viewModel: ChatViewModel, onBack: () -> Unit) {
                         if (voiceState.isListening) {
                             voiceManager.stopListening()
                         } else {
+                            tts?.stop() // Interrupt AI if it was speaking
                             val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                             if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
                                 voiceManager.startListening()
@@ -1959,26 +2004,67 @@ fun TopicExplorerScreen(topicName: String, viewModel: ChatViewModel, onBack: () 
         "Android" -> listOf(
             "Architecture (MVVM/Clean)", "Jetpack Compose State", "Side Effects & Recomposition",
             "Coroutines & Flow", "WorkManager & Background", "Hilt Dependency Injection",
-            "Retrofit & Ktor", "Room DB & Migrations", "Memory Leak Detection",
-            "UI Testing (Espresso)", "MotionLayout Animations", "Biometric Security"
+            "Retrofit & Ktor", "Room DB & Migrations", "Performance Profiling",
+            "UI Testing (Espresso)", "MotionLayout Animations", "Biometric Security",
+            "Custom Views & Canvas", "Modularization Strategies", "Bluetooth & BLE",
+            "Material 3 Components", "Memory Leak Detection", "Navigation Component",
+            "Activities & Fragments", "Android View System", "Intents & Intent Filters",
+            "Broadcast Receivers", "Content Providers", "Data Binding & View Binding",
+            "Paging Library", "App Startup Library", "CameraX API", "Google Maps Integration",
+            "Firebase Integration", "Google Sign-In", "In-App Purchases", "Push Notifications",
+            "ProGuard & R8", "App Bundle & Dynamic Delivery", "Accessibility in Android",
+            "Internationalization (i18n)", "Android Jetpack Glance", "WorkManager (Advanced)",
+            "Hilt Multi-module DI", "Ktor vs Retrofit", "SharedFlow & StateFlow",
+            "Android TV & WearOS", "Automotive & Android Auto"
         )
         "DSA" -> listOf(
             "Advanced Graph Algorithms", "Dynamic Programming (DP)", "Segment Trees & Fenwick",
             "Bitmasking Techniques", "Trie & Suffix Trees", "Sliding Window Patterns",
             "Backtracking & Recursion", "Heap & Priority Queues", "KMP String Matching",
-            "Disjoint Set Union (DSU)", "Topological Sorting", "Binary Search (Hard)"
+            "Disjoint Set Union (DSU)", "Topological Sorting", "Binary Search (Hard)",
+            "Heavy-Light Decomposition", "Max Flow / Min Cut", "Geometry Algorithms",
+            "Sqrt Decomposition", "B+ Trees & Red-Black", "Rabin-Karp Hashing"
         )
         "System Design" -> listOf(
             "Microservices Architecture", "Distributed Caching (Redis)", "Load Balancing (L7/L4)",
             "Database Sharding", "Kafka & Message Queues", "CAP & PACELC Theorem",
             "API Gateway Design", "CDN & Edge Computing", "OAuth2 & JWT Security",
-            "Observability (Grafana)", "Rate Limiting Patterns", "Global Scalability"
+            "Observability (Grafana)", "Rate Limiting Patterns", "Global Scalability",
+            "Consistency Models", "Gossip Protocol", "Vector Clocks",
+            "Consistent Hashing", "Bloom Filters", "Service Discovery"
         )
         "SQL" -> listOf(
             "Query Optimization", "Window Functions (Rank)", "CTEs & Recursive SQL",
             "ACID & Transactions", "Deadlock Prevention", "Indexing (B-Tree/Hash)",
             "SQL Injection Defense", "Stored Procedures", "Partitioning Strategies",
-            "JSON Data in SQL", "Full Text Search", "Materialized Views"
+            "JSON Data in SQL", "Full Text Search", "Materialized Views",
+            "Query Execution Plans", "Database Replication", "Triggers & Hooks",
+            "Hierarchical Queries", "Database Normalization", "Isolation Levels"
+        )
+        "Kotlin" -> listOf(
+            "Coroutines & Flow", "Sealed Classes", "Extension Functions", 
+            "Delegated Properties", "Inline/Value Classes", "DSL Construction",
+            "Multiplatform (KMP)", "Reflection", "Ktor Framework",
+            "Kotlin Metaprogramming", "KSP (Symbol Processing)", "Contracts API",
+            "Custom Type-Safe Builders", "Scope Functions Deep Dive", "Generics & Reified"
+        )
+        "Java" -> listOf(
+            "Generics", "Streams API", "Optional", "Concurrency (Locks/Phasers)",
+            "Reflection API", "JVM Internals", "Garbage Collection", "Maven/Gradle",
+            "Java Memory Model", "JIT Compilation", "Project Loom (Virtual Threads)",
+            "GraalVM", "NIO & Selectors", "Annotation Processing", "Lambda Internals"
+        )
+        "Cloud" -> listOf(
+            "Docker & K8s", "Serverless (AWS Lambda)", "CI/CD Pipelines",
+            "Cloud Storage", "IaC (Terraform)", "VPC & Networking",
+            "Service Mesh (Istio)", "Auto-scaling Policies", "Cost Optimization",
+            "Disaster Recovery Patterns", "Hybrid Cloud Setup", "Cloud Security Groups"
+        )
+        "Security" -> listOf(
+            "Encryption (AES/RSA)", "OAuth2 & OIDC", "Penetration Testing",
+            "OWASP Top 10", "Network Security", "Biometrics",
+            "Zero Trust Architecture", "TLS/SSL Handshake", "API Security Best Practices",
+            "Threat Modeling", "Content Security Policy", "SQLi & XSS Defense"
         )
         else -> emptyList()
     }

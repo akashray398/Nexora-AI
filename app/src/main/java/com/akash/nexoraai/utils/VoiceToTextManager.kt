@@ -39,6 +39,10 @@ class VoiceToTextManager(private val context: Context) : RecognitionListener {
         recognizer.stopListening()
     }
 
+    fun resetSpokenText() {
+        _state.value = _state.value.copy(spokenText = "")
+    }
+
     override fun onReadyForSpeech(params: Bundle?) {
         _state.value = _state.value.copy(error = null)
     }
@@ -59,9 +63,15 @@ class VoiceToTextManager(private val context: Context) : RecognitionListener {
 
     override fun onResults(results: Bundle?) {
         val data = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-        _state.value = _state.value.copy(
-            spokenText = data?.get(0) ?: ""
-        )
+        val text = data?.get(0) ?: ""
+        if (text.isNotBlank()) {
+            _state.value = _state.value.copy(
+                spokenText = text,
+                isListening = false
+            )
+        } else {
+            _state.value = _state.value.copy(isListening = false)
+        }
     }
 
     override fun onPartialResults(results: Bundle?) {}

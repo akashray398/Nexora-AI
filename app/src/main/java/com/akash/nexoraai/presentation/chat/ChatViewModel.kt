@@ -53,13 +53,14 @@ class ChatViewModel @Inject constructor(
         _isLoading.value = true
 
         viewModelScope.launch {
-            // Updated Instruction: Always use professional structured formatting
+            // Updated Instruction: Professional, organized, but concise by default.
             val structuralInstruction = """
-                Always format your response professionally:
-                - Use clear HEADINGS for different sections.
-                - Use BULLET POINTS for lists or steps.
-                - Use **BOLD** for important terms.
-                - Be concise and organized.
+                Default Persona: Conversational, helpful, and concise. 
+                Formatting Rules:
+                - If the user greeting (e.g. Hi, Hello), respond briefly (max 1 sentence).
+                - Use clear HEADINGS and BULLET POINTS for technical/complex answers.
+                - Use **BOLD** for keywords.
+                - Keep it short and satisfying unless the user explicitly asks for a "detailed" or "long" explanation.
             """.trimIndent()
 
             val fullPrompt = when {
