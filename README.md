@@ -89,7 +89,7 @@ To run Nexora AI locally, you need to provide your own API keys.
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/YOUR_USERNAME/NexoraAI.git
+    git clone https://github.com/akashray398/NexoraAI.git
     ```
 2.  Open the project in **Android Studio (Ladybug or newer)**.
 3.  Create a `local.properties` file in the root directory.
